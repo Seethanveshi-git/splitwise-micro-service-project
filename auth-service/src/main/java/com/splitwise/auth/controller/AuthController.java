@@ -13,6 +13,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/auth")
 public class AuthController {
@@ -51,5 +53,17 @@ public class AuthController {
         } else {
             return ResponseEntity.ok(new ValidateTokenResponse(null, null, false));
         }
+    }
+
+    @GetMapping("/user")
+    public ResponseEntity<UserDTO> getOrCreateUser(
+            @RequestParam String email, 
+            @RequestParam(required = false) String name) {
+        return ResponseEntity.ok(authService.getOrCreateUser(email, name != null ? name : email));
+    }
+
+    @GetMapping("/users/list")
+    public ResponseEntity<List<UserDTO>> getUsersByIds(@RequestParam List<Long> ids) {
+        return ResponseEntity.ok(authService.getUsersByIds(ids));
     }
 }

@@ -13,6 +13,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 public class AuthService {
 
@@ -30,22 +32,35 @@ public class AuthService {
     }
 
     public UserDTO signup(SignupRequest request) {
-        if (userRepository.existsByEmail(request.getEmail())) {
-            throw new RuntimeException("Email is already in use");
-        }
+        return userRepository.findByEmail(request.getEmail())
+                .map(user -> {
+                    if (user.isRegistered()) {
+                        throw new RuntimeException("Email is already in use");
+                    }
+                    // Claim the placeholder account
+                    user.setName(request.getName());
+                    user.setPassword(passwordEncoder.encode(request.getPassword()));
+                    user.setRegistered(true);
+                    User savedUser = userRepository.save(user);
+                    return mapToDTO(savedUser);
+                })
+                .orElseGet(() -> {
+                    User user = User.builder()
+                            .name(request.getName())
+                            .email(request.getEmail())
+                            .password(passwordEncoder.encode(request.getPassword()))
+                            .isRegistered(true)
+                            .build();
+                    User savedUser = userRepository.save(user);
+                    return mapToDTO(savedUser);
+                });
+    }
 
-        User user = User.builder()
-                .name(request.getName())
-                .email(request.getEmail())
-                .password(passwordEncoder.encode(request.getPassword()))
-                .build();
-
-        User savedUser = userRepository.save(user);
-
+    private UserDTO mapToDTO(User user) {
         return UserDTO.builder()
-                .id(savedUser.getId())
-                .name(savedUser.getName())
-                .email(savedUser.getEmail())
+                .id(user.getId())
+                .name(user.getName())
+                .email(user.getEmail())
                 .build();
     }
 
@@ -61,5 +76,35 @@ public class AuthService {
         } else {
             throw new RuntimeException("Invalid credentials");
         }
+    }
+
+    public UserDTO getOrCreateUser(String email, String name) {
+        return userRepository.findByEmail(email)
+                .map(user -> UserDTO.builder()
+                        .id(user.getId())
+                        .name(user.getName())
+                        .email(user.getEmail())
+                        .build())
+                .orElseGet(() -> {
+                    // Create a placeholder user for invitations
+                    User newUser = User.builder()
+                            .email(email)
+                            .name(name)
+                            .password(java.util.UUID.randomUUID().toString())
+                            .isRegistered(false)
+                            .build();
+                    newUser = userRepository.save(newUser);
+                    return UserDTO.builder()
+                            .id(newUser.getId())
+                            .name(newUser.getName())
+                            .email(newUser.getEmail())
+                            .build();
+                });
+    }
+
+    public List<UserDTO> getUsersByIds(List<Long> ids) {
+        return userRepository.findAllById(ids).stream()
+                .map(this::mapToDTO)
+                .collect(java.util.stream.Collectors.toList());
     }
 }
