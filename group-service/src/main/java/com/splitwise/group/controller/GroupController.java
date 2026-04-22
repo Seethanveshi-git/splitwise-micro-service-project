@@ -40,4 +40,15 @@ public class GroupController {
     public ResponseEntity<GroupResponse> getGroupDetails(@PathVariable Long groupId) {
         return ResponseEntity.ok(groupService.getGroupDetails(groupId));
     }
+
+    @DeleteMapping("/{groupId}")
+    public ResponseEntity<String> deleteGroup(@PathVariable Long groupId) {
+        groupService.deleteGroup(groupId);
+        return ResponseEntity.ok("Group deleted successfully");
+    }
+
+    @PutMapping("/{groupId}")
+    public ResponseEntity<GroupResponse> updateGroup(@PathVariable Long groupId, @Valid @RequestBody GroupRequest request) {
+        return ResponseEntity.ok(groupService.updateGroup(groupId, request));
+    }
 }

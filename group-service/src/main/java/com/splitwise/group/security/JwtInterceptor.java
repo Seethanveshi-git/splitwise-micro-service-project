@@ -13,17 +13,22 @@ public class JwtInterceptor implements HandlerInterceptor {
 
     private final AuthServiceClient authServiceClient;
 
-    public JwtInterceptor(AuthServiceClient authServiceClient) {
+    public JwtInterceptor(@org.springframework.context.annotation.Lazy AuthServiceClient authServiceClient) {
         this.authServiceClient = authServiceClient;
     }
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
+        // Handle CORS preflight requests
+        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+            response.setStatus(HttpServletResponse.SC_OK);
+            return true;
+        }
+
         String authHeader = request.getHeader("Authorization");
 
         if (authHeader != null && authHeader.startsWith("Bearer ")) {
-            String token = authHeader.substring(7);
-            ValidateTokenResponse validationResponse = authServiceClient.validateToken(token);
+            ValidateTokenResponse validationResponse = authServiceClient.validateToken(authHeader);
 
             if (validationResponse != null && validationResponse.isValid()) {
                 // Store user ID in ThreadLocal context

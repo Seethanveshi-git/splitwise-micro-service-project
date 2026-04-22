@@ -1,41 +1,23 @@
 package com.splitwise.group.client;
 
+import com.splitwise.group.dto.UserDTO;
 import com.splitwise.group.dto.ValidateTokenResponse;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.http.HttpEntity;
-import org.springframework.http.HttpHeaders;
-import org.springframework.http.HttpMethod;
-import org.springframework.http.ResponseEntity;
-import org.springframework.stereotype.Component;
-import org.springframework.web.client.RestTemplate;
+import org.springframework.cloud.openfeign.FeignClient;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestHeader;
+import org.springframework.web.bind.annotation.RequestParam;
 
-@Component
-public class AuthServiceClient {
+import java.util.List;
 
-    private final RestTemplate restTemplate;
+@FeignClient(name = "auth-service", url = "${auth-service.url}")
+public interface AuthServiceClient {
 
-    @Value("${auth-service.url}")
-    private String authServiceUrl;
+    @GetMapping("/api/auth/validate")
+    ValidateTokenResponse validateToken(@RequestHeader("Authorization") String token);
 
-    public AuthServiceClient(RestTemplate restTemplate) {
-        this.restTemplate = restTemplate;
-    }
+    @GetMapping("/api/auth/user")
+    UserDTO getOrCreateUser(@RequestParam("email") String email, @RequestParam("name") String name);
 
-    public ValidateTokenResponse validateToken(String token) {
-        HttpHeaders headers = new HttpHeaders();
-        headers.set("Authorization", "Bearer " + token);
-        HttpEntity<String> entity = new HttpEntity<>(headers);
-
-        try {
-            ResponseEntity<ValidateTokenResponse> response = restTemplate.exchange(
-                    authServiceUrl + "/api/auth/validate",
-                    HttpMethod.GET,
-                    entity,
-                    ValidateTokenResponse.class
-            );
-            return response.getBody();
-        } catch (Exception e) {
-            return new ValidateTokenResponse(null, null, false);
-        }
-    }
+    @GetMapping("/api/auth/users/list")
+    List<UserDTO> getUsersByIds(@RequestParam("ids") List<Long> ids);
 }

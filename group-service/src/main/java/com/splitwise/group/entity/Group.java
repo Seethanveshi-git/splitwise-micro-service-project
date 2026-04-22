@@ -28,4 +28,7 @@ public class Group {
 
     @Column(nullable = false)
     private LocalDateTime createdAt;
+
+    @OneToMany(mappedBy = "group", cascade = CascadeType.ALL, orphanRemoval = true)
+    private java.util.List<GroupMember> members;
 }
