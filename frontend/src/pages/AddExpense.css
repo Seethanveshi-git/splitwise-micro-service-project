@@ -1,0 +1,147 @@
+.add-expense-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 60px);
+  background-color: #f7f7f7;
+  padding: 20px;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+}
+
+.expense-card {
+  background: white;
+  width: 100%;
+  max-width: 500px;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+  padding: 40px;
+}
+
+.expense-header-title {
+  text-align: center;
+  font-size: 24px;
+  font-weight: 700;
+  color: #333;
+  margin-bottom: 30px;
+}
+
+.form-group {
+  margin-bottom: 20px;
+}
+
+.form-group label {
+  display: block;
+  font-weight: 600;
+  font-size: 14px;
+  color: #333;
+  margin-bottom: 8px;
+}
+
+.input-field, .group-dropdown, .date-input, .note-input {
+  width: 100%;
+  padding: 12px 15px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  font-size: 15px;
+  color: #444;
+  outline: none;
+  transition: border-color 0.2s;
+  box-sizing: border-box;
+}
+
+.input-field:focus, .group-dropdown:focus, .date-input:focus, .note-input:focus {
+  border-color: #00b04f;
+}
+
+.amount-input-group {
+  display: flex;
+  gap: 10px;
+}
+
+.currency-select {
+  width: 100px;
+  padding: 10px;
+  border: 1px solid #ddd;
+  border-radius: 6px;
+  background-color: #fff;
+}
+
+.amount-input-field {
+  flex: 1;
+}
+
+.note-input {
+  height: 80px;
+  resize: none;
+}
+
+.btn-save-expense {
+  width: 100%;
+  background-color: #00b04f;
+  color: white;
+  border: none;
+  padding: 14px;
+  border-radius: 6px;
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: 20px;
+  transition: background-color 0.2s;
+}
+
+.btn-save-expense:hover {
+  background-color: #008f40;
+}
+
+.btn-save-expense:disabled {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+.split-members-list {
+  margin-top: 25px;
+  border-top: 1px solid #eee;
+  padding-top: 20px;
+}
+
+.member-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 10px 0;
+}
+
+.member-row .user-info {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.member-row .split-input-group {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.member-row .split-amount-display {
+  font-weight: 600;
+  color: #666;
+}
+
+.split-input-sm {
+  width: 80px;
+  padding: 6px 10px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  text-align: right;
+}
+
+.error-alert {
+  background-color: #ffeaea;
+  color: #d32f2f;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 20px;
+  font-size: 14px;
+  text-align: center;
+}

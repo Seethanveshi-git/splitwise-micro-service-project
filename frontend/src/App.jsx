@@ -5,6 +5,7 @@ import Login from './pages/Login';
 import Signup from './pages/Signup';
 import Dashboard from './pages/Dashboard';
 import CreateGroup from './pages/CreateGroup';
+import AddExpense from './pages/AddExpense';
 
 function App() {
   return (
@@ -17,6 +18,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/create-group" element={<CreateGroup />} />
           <Route path="/edit-group/:groupId" element={<CreateGroup />} />
+          <Route path="/group/:groupId/add-expense" element={<AddExpense />} />
         </Routes>
       </div>
     </BrowserRouter>
