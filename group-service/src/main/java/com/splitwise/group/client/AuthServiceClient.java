@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 
 import java.util.List;
 
-@FeignClient(name = "auth-service", url = "${auth-service.url}")
+@FeignClient(name = "auth-service")
 public interface AuthServiceClient {
 
     @GetMapping("/api/auth/validate")

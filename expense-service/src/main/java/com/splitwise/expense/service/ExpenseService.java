@@ -2,6 +2,7 @@ package com.splitwise.expense.service;
 
 import com.splitwise.expense.dto.ExpenseRequest;
 import com.splitwise.expense.dto.ExpenseResponse;
+import com.splitwise.expense.dto.GroupBalanceResponse;
 import com.splitwise.expense.dto.SplitResponse;
 import com.splitwise.expense.entity.Expense;
 import com.splitwise.expense.entity.ExpenseSplit;
@@ -147,6 +148,38 @@ public class ExpenseService {
             ExpenseSplit lastSplit = splits.get(splits.size() - 1);
             lastSplit.setAmount(lastSplit.getAmount() + difference);
         }
+    }
+
+    public List<GroupBalanceResponse> getGroupBalances(Long groupId) {
+        List<Expense> expenses = expenseRepository.findByGroupId(groupId);
+        java.util.Map<Long, Long> userBalances = new java.util.HashMap<>();
+
+        for (Expense expense : expenses) {
+            Long payerId = expense.getPaidBy();
+            
+            // Calculate what others owe the payer (total amount minus payer's own share)
+            Long payerShare = expense.getSplits().stream()
+                    .filter(s -> s.getUserId().equals(payerId))
+                    .map(ExpenseSplit::getAmount)
+                    .findFirst()
+                    .orElse(0L);
+            
+            Long amountOthersOwe = expense.getAmount() - payerShare;
+            
+            // Add to payer's balance (they get back this much)
+            userBalances.put(payerId, userBalances.getOrDefault(payerId, 0L) + amountOthersOwe);
+            
+            // Subtract from each non-payer's balance
+            for (ExpenseSplit split : expense.getSplits()) {
+                if (!split.getUserId().equals(payerId)) {
+                    userBalances.put(split.getUserId(), userBalances.getOrDefault(split.getUserId(), 0L) - split.getAmount());
+                }
+            }
+        }
+
+        return userBalances.entrySet().stream()
+                .map(entry -> new GroupBalanceResponse(entry.getKey(), BigDecimal.valueOf(entry.getValue()).divide(BigDecimal.valueOf(100), 2, RoundingMode.HALF_UP)))
+                .collect(Collectors.toList());
     }
 
     public List<ExpenseResponse> getGroupExpenses(Long groupId) {

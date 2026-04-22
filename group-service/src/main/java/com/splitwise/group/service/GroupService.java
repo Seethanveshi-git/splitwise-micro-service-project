@@ -55,7 +55,7 @@ public class GroupService {
             for (var memberReq : request.getMembers()) {
                 if (memberReq.getEmail() != null && !memberReq.getEmail().isBlank()) {
                     try {
-                        // Use Feign Client instead of RestTemplate
+                        // Use Feign Client
                         UserDTO userDTO = authServiceClient.getOrCreateUser(
                                 memberReq.getEmail().trim(), 
                                 memberReq.getName().trim()

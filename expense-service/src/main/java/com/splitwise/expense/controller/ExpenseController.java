@@ -2,6 +2,7 @@ package com.splitwise.expense.controller;
 
 import com.splitwise.expense.dto.ExpenseRequest;
 import com.splitwise.expense.dto.ExpenseResponse;
+import com.splitwise.expense.dto.GroupBalanceResponse;
 import com.splitwise.expense.dto.SplitResponse;
 import com.splitwise.expense.service.ExpenseService;
 import jakarta.validation.Valid;
@@ -31,5 +32,10 @@ public class ExpenseController {
     @GetMapping("/group/{groupId}")
     public ResponseEntity<List<ExpenseResponse>> getGroupExpenses(@PathVariable Long groupId) {
         return ResponseEntity.ok(expenseService.getGroupExpenses(groupId));
+    }
+
+    @GetMapping("/group/{groupId}/balances")
+    public ResponseEntity<List<GroupBalanceResponse>> getGroupBalances(@PathVariable Long groupId) {
+        return ResponseEntity.ok(expenseService.getGroupBalances(groupId));
     }
 }
