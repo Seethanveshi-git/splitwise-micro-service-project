@@ -37,11 +37,19 @@ const CreateGroup = () => {
 
       // Resolve member IDs to names/emails for the form
       if (groupData.members && groupData.members.length > 0) {
-        const users = await getUsersByIds(groupData.members);
-        // Filter out the current user as they are shown separately or we want to exclude them from the editable list
-        const otherMembers = users
-          .filter(u => u.id !== JSON.parse(localStorage.getItem('user')).userId)
-          .map(u => ({ name: u.name, email: u.email }));
+        const memberIds = groupData.members.map(m => m.userId);
+        const users = await getUsersByIds(memberIds);
+        
+        // Map users and prioritize the nickname we stored in the group
+        const otherMembers = groupData.members
+          .filter(m => m.userId !== JSON.parse(localStorage.getItem('user')).userId)
+          .map(m => {
+             const userObj = users.find(u => u.id === m.userId);
+             return { 
+                name: m.nickname || userObj?.name || '', 
+                email: userObj?.email || '' 
+             };
+          });
 
         setMembers(otherMembers.length > 0 ? otherMembers : [{ name: '', email: '' }]);
       }

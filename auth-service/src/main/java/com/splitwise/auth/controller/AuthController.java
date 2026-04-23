@@ -31,12 +31,26 @@ public class AuthController {
 
     @PostMapping("/signup")
     public ResponseEntity<UserDTO> signup(@Valid @RequestBody SignupRequest request) {
-        return ResponseEntity.ok(authService.signup(request));
+        UserDTO user = authService.signup(request);
+        return ResponseEntity.ok(user);
     }
 
     @PostMapping("/login")
-    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request) {
-        return ResponseEntity.ok(authService.login(request));
+    public ResponseEntity<AuthResponse> login(@Valid @RequestBody LoginRequest request, jakarta.servlet.http.HttpServletResponse response) {
+        AuthResponse authResponse = authService.login(request);
+        
+        // Create Cookie
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("jwt", authResponse.getToken())
+                .httpOnly(true)
+                .secure(false) // Set to true in production with HTTPS
+                .path("/")
+                .maxAge(24 * 60 * 60) // 1 day
+                .sameSite("Lax")
+                .build();
+        
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+        
+        return ResponseEntity.ok(authResponse);
     }
 
     @GetMapping("/validate")

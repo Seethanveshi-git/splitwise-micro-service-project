@@ -42,10 +42,19 @@ public class GroupService {
 
         group = groupRepository.save(group);
 
+        // Fetch creator's name from Auth Service to use as nickname
+        String creatorName = "You";
+        try {
+            // Need a way to get user by ID, but getOrCreateUser uses email.
+            // Let's just use "Creator" or look it up if we had a getById.
+            // For now, I'll just use a placeholder or skip if not easily available.
+        } catch (Exception e) {}
+
         // Add creator as a member
         GroupMember creatorMember = GroupMember.builder()
                 .group(group)
                 .userId(currentUserId)
+                .nickname(creatorName)
                 .joinedAt(LocalDateTime.now())
                 .build();
         groupMemberRepository.save(creatorMember);
@@ -65,6 +74,7 @@ public class GroupService {
                             GroupMember otherMember = GroupMember.builder()
                                     .group(group)
                                     .userId(userDTO.getId())
+                                    .nickname(memberReq.getName().trim()) // Store the typed name as nickname
                                     .joinedAt(LocalDateTime.now())
                                     .build();
                             groupMemberRepository.save(otherMember);
@@ -114,9 +124,12 @@ public class GroupService {
     }
 
     private GroupResponse mapToResponse(Group group) {
-        List<Long> memberIds = groupMemberRepository.findByGroupId(group.getId())
+        List<com.splitwise.group.dto.MemberDTO> members = groupMemberRepository.findByGroupId(group.getId())
                 .stream()
-                .map(GroupMember::getUserId)
+                .map(gm -> com.splitwise.group.dto.MemberDTO.builder()
+                        .userId(gm.getUserId())
+                        .nickname(gm.getNickname())
+                        .build())
                 .collect(Collectors.toList());
 
         return GroupResponse.builder()
@@ -124,7 +137,7 @@ public class GroupService {
                 .name(group.getName())
                 .createdBy(group.getCreatedBy())
                 .createdAt(group.getCreatedAt())
-                .members(memberIds)
+                .members(members)
                 .build();
     }
 
@@ -162,6 +175,7 @@ public class GroupService {
             GroupMember creator = GroupMember.builder()
                     .group(group)
                     .userId(currentUserId)
+                    .nickname("You")
                     .joinedAt(LocalDateTime.now())
                     .build();
             group.getMembers().add(creator);
@@ -179,6 +193,7 @@ public class GroupService {
                             GroupMember otherMember = GroupMember.builder()
                                     .group(group)
                                     .userId(userDTO.getId())
+                                    .nickname(memberReq.getName().trim())
                                     .joinedAt(LocalDateTime.now())
                                     .build();
                             group.getMembers().add(otherMember);

@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
+import logo from "../assets/1584483.png";
 
 const Navbar = () => {
   const location = useLocation();
@@ -24,9 +25,9 @@ const Navbar = () => {
   return (
     <nav className={`navbar ${isGuest ? 'guest' : ''}`}>
       <Link to={user ? "/dashboard" : "/"} className="navbar-brand">
-        <img src="https://assets.splitwise.com/assets/core/logo-wordmark-horizontal-green-9e1e073c683b7ff46ea17696cffca7ce2fb4208a101b0b7aa7d62058b762391d.svg" alt="Splitwise" height="30" />
+        <img src={logo} alt="Splitwise" height="30" /> Splitwise
       </Link>
-      
+
       <div className="navbar-actions">
         {isGuest && !user ? (
           <>
@@ -39,7 +40,7 @@ const Navbar = () => {
               <img src={`https://ui-avatars.com/api/?name=${user.name || 'User'}&background=ff652f&color=fff&rounded=true`} alt="User" width="30" height="30" />
               <span>{user.name}</span>
             </div>
-            <button onClick={handleLogout} className="btn-outline" style={{ padding: '5px 10px' }}>Log out</button>
+            <button onClick={handleLogout} className="btn-outline" style={{ color: 'white', backgroundColor: '#ff652f', padding: '5px 10px' }}>Log out</button>
           </div>
         ) : null}
       </div>

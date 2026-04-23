@@ -151,16 +151,64 @@
   border-bottom: 1px solid #eee;
 }
 
+.expense-item-container {
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.expense-item-container:hover {
+  background-color: #fcfcfc;
+}
+
+.expense-item-container.expanded {
+  background-color: #f9f9f9;
+  box-shadow: inset 0 0 10px rgba(0,0,0,0.02);
+}
+
 .expense-item {
   display: flex;
   align-items: center;
   padding: 12px 20px;
-  border-bottom: 1px solid #eee;
-  cursor: pointer;
+  gap: 15px;
 }
 
-.expense-item:hover {
-  background-color: #fdfdfd;
+.expense-actions-tray {
+  padding: 0 20px 15px 75px;
+  overflow: hidden;
+}
+
+.tray-content {
+  display: flex;
+  gap: 15px;
+  padding-top: 10px;
+  border-top: 1px dashed #eee;
+}
+
+.btn-edit-expense, .btn-delete-expense {
+  background: white;
+  border: 1px solid #ddd;
+  padding: 6px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  color: #666;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  transition: all 0.2s;
+}
+
+.btn-edit-expense:hover {
+  border-color: var(--primary-color);
+  color: var(--primary-color);
+  background-color: #f0fff4;
+}
+
+.btn-delete-expense:hover {
+  border-color: #ff4444;
+  color: #ff4444;
+  background-color: #fff5f5;
 }
 
 .expense-date {

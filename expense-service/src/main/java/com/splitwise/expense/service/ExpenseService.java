@@ -149,6 +149,38 @@ public class ExpenseService {
             lastSplit.setAmount(lastSplit.getAmount() + difference);
         }
     }
+    public ExpenseResponse getExpenseById(Long id) {
+        Expense expense = expenseRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+        return mapToResponse(expense);
+    }
+
+    public void deleteExpense(Long expenseId) {
+        expenseRepository.deleteById(expenseId);
+    }
+
+    @Transactional
+    public ExpenseResponse updateExpense(Long expenseId, ExpenseRequest request) {
+        Expense expense = expenseRepository.findById(expenseId)
+                .orElseThrow(() -> new RuntimeException("Expense not found"));
+
+        expense.setDescription(request.getDescription());
+        expense.setAmount(request.getAmount().multiply(BigDecimal.valueOf(100)).longValue());
+        expense.setExpenseDate(request.getExpenseDate());
+        expense.setNote(request.getNote());
+        expense.setPaidBy(request.getPaidBy());
+
+        // Clear old splits
+        expense.getSplits().clear();
+
+        // Calculate and add new splits
+        Long totalPaises = expense.getAmount();
+        List<ExpenseSplit> newSplits = calculateInternalSplits(expense, request, totalPaises);
+        expense.getSplits().addAll(newSplits);
+
+        Expense updated = expenseRepository.save(expense);
+        return mapToResponse(updated);
+    }
 
     public List<GroupBalanceResponse> getGroupBalances(Long groupId) {
         List<Expense> expenses = expenseRepository.findByGroupId(groupId);

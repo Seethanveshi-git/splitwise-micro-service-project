@@ -17,5 +17,5 @@ public class GroupResponse {
     private String name;
     private Long createdBy;
     private LocalDateTime createdAt;
-    private List<Long> members;
+    private List<MemberDTO> members;
 }

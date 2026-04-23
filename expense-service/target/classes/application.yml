@@ -1,5 +1,5 @@
 server:
-  port: 8083
+  port: 0
 
 spring:
   application:
@@ -15,11 +15,6 @@ spring:
     properties:
       hibernate:
         dialect: org.hibernate.dialect.PostgreSQLDialect
-
-auth-service:
-  url: http://localhost:8081
-group-service:
-  url: http://localhost:8082
 
 eureka:
   client:

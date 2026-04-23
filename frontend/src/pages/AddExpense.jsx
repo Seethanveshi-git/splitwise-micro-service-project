@@ -2,12 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getGroupDetails, getUserGroups } from '../services/groupService';
 import { getUsersByIds } from '../services/authService';
-import { createExpense, calculateSplits } from '../services/expenseService';
+import { createExpense, updateExpense, getExpenseDetails, calculateSplits } from '../services/expenseService';
 import './AddExpense.css';
 
 const AddExpense = () => {
-  const { groupId: initialGroupId } = useParams();
+  const { groupId: initialGroupId, expenseId } = useParams();
   const navigate = useNavigate();
+  const isEditMode = !!expenseId;
   
   const [allGroups, setAllGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(initialGroupId || '');
@@ -20,8 +21,8 @@ const AddExpense = () => {
   const [splits, setSplits] = useState([]); 
   const [calculatedSplits, setCalculatedSplits] = useState([]); 
   
-  const getLocalDatetime = () => {
-    const now = new Date();
+  const getLocalDatetime = (dateObj = new Date()) => {
+    const now = dateObj;
     const offset = now.getTimezoneOffset() * 60000;
     const localISOTime = new Date(now - offset).toISOString().slice(0, 16);
     return localISOTime;
@@ -44,7 +45,29 @@ const AddExpense = () => {
     }
   }, [selectedGroupId]);
 
-  // Memoized calculation handler to prevent stale closures and infinite loops
+  const loadExpenseDetails = async (id) => {
+    try {
+      const expense = await getExpenseDetails(id);
+      setDescription(expense.description);
+      setAmount(expense.amount.toString());
+      setPaidBy(expense.paidBy.toString());
+      setSplitType(expense.splitType);
+      setNote(expense.note || '');
+      setExpenseDate(getLocalDatetime(new Date(expense.expenseDate)));
+      
+      // Wait for members to be loaded before setting splits
+      const splitData = expense.splits.map(s => ({
+        userId: s.userId,
+        amount: expense.splitType === 'EQUAL' ? '' : s.amount.toString(),
+        selected: true
+      }));
+      setSplits(splitData);
+    } catch (error) {
+      setErrorMsg("Failed to load expense details.");
+    }
+  };
+
+  // Memoized calculation handler
   const triggerCalculation = useCallback(async (currentAmount, currentSplitType, currentSplits) => {
     if (!currentAmount || !currentSplitType || currentSplits.length === 0) {
       setCalculatedSplits([]);
@@ -73,11 +96,10 @@ const AddExpense = () => {
     }
   }, []);
 
-  // Effect to trigger calculation when inputs change
   useEffect(() => {
     const timer = setTimeout(() => {
       triggerCalculation(amount, splitType, splits);
-    }, 500); // Debounce to avoid too many requests
+    }, 500);
     return () => clearTimeout(timer);
   }, [amount, splitType, splits, triggerCalculation]);
 
@@ -85,7 +107,7 @@ const AddExpense = () => {
     try {
       const groups = await getUserGroups();
       setAllGroups(groups);
-      if (!selectedGroupId && groups.length > 0) {
+      if (!selectedGroupId && groups.length > 0 && !isEditMode) {
         setSelectedGroupId(groups[0].id);
       }
     } catch (error) {
@@ -96,19 +118,34 @@ const AddExpense = () => {
   const loadGroupMembers = async (gid) => {
     try {
       const groupData = await getGroupDetails(gid);
-      const users = await getUsersByIds(groupData.members);
-      setMembers(users);
+      const memberIds = groupData.members.map(m => m.userId);
+      const users = await getUsersByIds(memberIds);
       
-      const currentUser = JSON.parse(localStorage.getItem('user'));
-      setPaidBy(currentUser.userId);
+      // Map official names to nicknames from the group
+      const membersWithNicknames = users.map(u => {
+        const memberInfo = groupData.members.find(m => m.userId === u.id);
+        return {
+          ...u,
+          name: memberInfo?.nickname || u.name
+        };
+      });
       
-      const initialSplits = users.map(u => ({
-        userId: u.id,
-        amount: '',
-        selected: true
-      }));
-      setSplits(initialSplits);
-      setCalculatedSplits([]); // Reset calculations for new group
+      setMembers(membersWithNicknames);
+      
+      if (!isEditMode) {
+        const currentUser = JSON.parse(localStorage.getItem('user'));
+        setPaidBy(currentUser.userId);
+        
+        const initialSplits = users.map(u => ({
+          userId: u.id,
+          amount: '',
+          selected: true
+        }));
+        setSplits(initialSplits);
+      } else {
+          // If in edit mode, fetch details after members are loaded to ensure we have user info
+          await loadExpenseDetails(expenseId);
+      }
     } catch (error) {
       setErrorMsg("Failed to load group members.");
     }
@@ -165,17 +202,21 @@ const AddExpense = () => {
         paidBy: parseInt(paidBy),
         splitType,
         note,
-        expenseDate: expenseDate + ":00",
+        expenseDate: expenseDate.includes('Z') ? expenseDate : expenseDate + ":00",
         splits: selectedSplits.map(s => ({
           userId: s.userId,
           amount: splitType === 'EQUAL' ? 0 : parseFloat(s.amount || 0)
         }))
       };
 
-      await createExpense(requestData);
+      if (isEditMode) {
+        await updateExpense(expenseId, requestData);
+      } else {
+        await createExpense(requestData);
+      }
       navigate('/dashboard');
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || "Failed to add expense.");
+      setErrorMsg(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} expense.`);
     } finally {
       setIsLoading(false);
     }
@@ -184,7 +225,7 @@ const AddExpense = () => {
   return (
     <div className="add-expense-container">
       <div className="expense-card">
-        <h1 className="expense-header-title">Add Expense</h1>
+        <h1 className="expense-header-title">{isEditMode ? 'Edit Expense' : 'Add Expense'}</h1>
 
         {errorMsg && <div className="error-alert">{errorMsg}</div>}
 
@@ -226,6 +267,7 @@ const AddExpense = () => {
               value={selectedGroupId} 
               onChange={(e) => setSelectedGroupId(e.target.value)}
               required
+              disabled={isEditMode}
             >
               <option value="" disabled>Select a group</option>
               {allGroups.map(g => (
@@ -331,9 +373,14 @@ const AddExpense = () => {
             </div>
           )}
 
-          <button type="submit" className="btn-save-expense" disabled={isLoading}>
-            {isLoading ? 'Saving...' : 'Save Expense'}
-          </button>
+          <div style={{ display: 'flex', gap: '15px' }}>
+            <button type="submit" className="btn-save-expense" style={{ flex: 1 }} disabled={isLoading}>
+              {isLoading ? 'Saving...' : (isEditMode ? 'Update Expense' : 'Save Expense')}
+            </button>
+            <button type="button" className="btn-cancel" style={{ padding: '0 20px', border: '1px solid #ddd', borderRadius: '8px', cursor: 'pointer' }} onClick={() => navigate('/dashboard')}>
+              Cancel
+            </button>
+          </div>
         </form>
       </div>
     </div>

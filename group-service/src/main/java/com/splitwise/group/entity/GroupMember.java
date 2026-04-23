@@ -27,6 +27,8 @@ public class GroupMember {
     @Column(nullable = false)
     private Long userId; // User ID from Auth Service
 
+    private String nickname;
+
     @Column(nullable = false)
     private LocalDateTime joinedAt;
 }

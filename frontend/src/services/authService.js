@@ -1,10 +1,16 @@
 import axios from 'axios';
 
-// Note: Auth service runs on port 8081
-const AUTH_API_URL = 'http://localhost:8081/api/auth';
+// Note: API Gateway runs on port 8080
+const AUTH_API_URL = 'http://localhost:8080/api/auth';
+
+// Globally enable sending cookies with requests
+axios.defaults.withCredentials = true;
 
 export const login = async (email, password) => {
     const response = await axios.post(`${AUTH_API_URL}/login`, { email, password });
+    if (response.data && response.data.user) {
+        localStorage.setItem('user', JSON.stringify(response.data.user));
+    }
     return response.data;
 };
 
