@@ -8,9 +8,17 @@ axios.defaults.withCredentials = true;
 
 export const login = async (email, password) => {
     const response = await axios.post(`${AUTH_API_URL}/login`, { email, password });
-    if (response.data && response.data.user) {
-        localStorage.setItem('user', JSON.stringify(response.data.user));
+    
+    // Only store non-sensitive info for the UI
+    if (response.data) {
+        const userData = {
+            userId: response.data.userId,
+            name: response.data.name,
+            email: response.data.email
+        };
+        localStorage.setItem('user', JSON.stringify(userData));
     }
+    
     return response.data;
 };
 
@@ -31,4 +39,9 @@ export const getUsersByIds = async (ids) => {
         params: { ids: ids.join(',') }
     });
     return response.data;
+};
+
+export const logout = async () => {
+    await axios.post(`${AUTH_API_URL}/logout`);
+    localStorage.removeItem('user');
 };

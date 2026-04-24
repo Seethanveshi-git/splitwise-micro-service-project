@@ -7,10 +7,10 @@ import Dashboard from './pages/Dashboard';
 import CreateGroup from './pages/CreateGroup';
 import AddExpense from './pages/AddExpense';
 
-// Component to protect routes - redirects to login if no token
+// Component to protect routes - redirects to login if no session
 const ProtectedRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  if (!token) {
+  const user = localStorage.getItem('user');
+  if (!user) {
     return <Navigate to="/" replace />;
   }
   return children;
@@ -18,8 +18,8 @@ const ProtectedRoute = ({ children }) => {
 
 // Component to prevent logged-in users from seeing login/signup
 const PublicRoute = ({ children }) => {
-  const token = localStorage.getItem('token');
-  if (token) {
+  const user = localStorage.getItem('user');
+  if (user) {
     return <Navigate to="/dashboard" replace />;
   }
   return children;

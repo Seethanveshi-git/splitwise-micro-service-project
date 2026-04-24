@@ -80,4 +80,16 @@ public class AuthController {
     public ResponseEntity<List<UserDTO>> getUsersByIds(@RequestParam List<Long> ids) {
         return ResponseEntity.ok(authService.getUsersByIds(ids));
     }
+
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(jakarta.servlet.http.HttpServletResponse response) {
+        org.springframework.http.ResponseCookie cookie = org.springframework.http.ResponseCookie.from("jwt", "")
+                .httpOnly(true)
+                .secure(false)
+                .path("/")
+                .maxAge(0) // Expire immediately
+                .build();
+        response.addHeader(org.springframework.http.HttpHeaders.SET_COOKIE, cookie.toString());
+        return ResponseEntity.ok().build();
+    }
 }

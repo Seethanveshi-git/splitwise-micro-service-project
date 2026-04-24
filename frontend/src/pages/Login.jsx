@@ -16,12 +16,7 @@ const Login = () => {
     setIsLoading(true);
 
     try {
-      const data = await login(email, password);
-      
-      // Save token (e.g. in localStorage)
-      localStorage.setItem('token', data.token);
-      localStorage.setItem('user', JSON.stringify(data));
-      
+      await login(email, password);
       navigate('/dashboard');
     } catch (error) {
       if (error.response && error.response.data) {

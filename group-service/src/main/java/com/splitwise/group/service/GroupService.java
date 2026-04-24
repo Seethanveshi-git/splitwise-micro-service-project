@@ -1,9 +1,7 @@
 package com.splitwise.group.service;
 
 import com.splitwise.group.config.UserContext;
-import com.splitwise.group.dto.AddMemberRequest;
-import com.splitwise.group.dto.GroupRequest;
-import com.splitwise.group.dto.GroupResponse;
+import com.splitwise.group.dto.*;
 import com.splitwise.group.entity.Group;
 import com.splitwise.group.entity.GroupMember;
 import com.splitwise.group.repository.GroupMemberRepository;
@@ -15,7 +13,6 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
 import com.splitwise.group.client.AuthServiceClient;
-import com.splitwise.group.dto.UserDTO;
 
 @Service
 public class GroupService {
@@ -126,7 +123,7 @@ public class GroupService {
     private GroupResponse mapToResponse(Group group) {
         List<com.splitwise.group.dto.MemberDTO> members = groupMemberRepository.findByGroupId(group.getId())
                 .stream()
-                .map(gm -> com.splitwise.group.dto.MemberDTO.builder()
+                .map(gm -> MemberDTO.builder()
                         .userId(gm.getUserId())
                         .nickname(gm.getNickname())
                         .build())

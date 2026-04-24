@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import logo from "../assets/1584483.png";
+import { logout } from '../services/authService';
 
 const Navbar = () => {
   const location = useLocation();
@@ -15,11 +16,18 @@ const Navbar = () => {
     }
   }, [location.pathname]); // Update when route changes
 
-  const handleLogout = () => {
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    setUser(null);
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      await logout();
+      setUser(null);
+      navigate('/');
+    } catch (error) {
+      console.error("Logout failed", error);
+      // Fallback: clear local state anyway
+      localStorage.removeItem('user');
+      setUser(null);
+      navigate('/');
+    }
   };
 
   return (
