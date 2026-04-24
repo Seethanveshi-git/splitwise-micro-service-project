@@ -4,6 +4,11 @@ server:
 spring:
   application:
     name: api-gateway
+  data:
+    redis:
+      host: redis-11781.crce263.ap-south-1-1.ec2.cloud.redislabs.com
+      port: 11781
+      password: c6iBDzGsQz922Ocvt496JvAYr8n4fxAn
   cloud:
     gateway:
       routes:
@@ -21,6 +26,11 @@ spring:
           uri: lb://expense-service
           predicates:
             - Path=/api/expenses/**
+          filters:
+            - name: SlidingWindowRateLimit
+              args:
+                limit: 2
+                windowSeconds: 60
 
         - id: dashboard-service
           uri: lb://dashboard-service
@@ -38,6 +48,9 @@ spring:
               - DELETE
             allowedHeaders: "*"
             allowCredentials: true
+
+jwt:
+  secret: 404E635266556A586E3272357538782F413F4428472B4B6250645367566B5970
 
 eureka:
   client:

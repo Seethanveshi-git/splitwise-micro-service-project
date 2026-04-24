@@ -15,7 +15,9 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -184,7 +186,7 @@ public class ExpenseService {
 
     public List<GroupBalanceResponse> getGroupBalances(Long groupId) {
         List<Expense> expenses = expenseRepository.findByGroupId(groupId);
-        java.util.Map<Long, Long> userBalances = new java.util.HashMap<>();
+        Map<Long, Long> userBalances = new HashMap<>();
 
         for (Expense expense : expenses) {
             Long payerId = expense.getPaidBy();
