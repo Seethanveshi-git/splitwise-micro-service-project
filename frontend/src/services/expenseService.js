@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 // Note: API Gateway runs on port 8080
-const EXPENSE_API_URL = 'http://localhost:8080/api/expenses';
+const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
+const EXPENSE_API_URL = `${GATEWAY_URL}/api/expenses`;
 
 export const createExpense = async (expenseData) => {
     const response = await axios.post(EXPENSE_API_URL, expenseData);

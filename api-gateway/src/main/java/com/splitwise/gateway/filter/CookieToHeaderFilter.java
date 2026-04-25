@@ -28,7 +28,7 @@ public class CookieToHeaderFilter implements GlobalFilter {
             
             return chain.filter(exchange.mutate().request(modifiedRequest).build());
         }
-        
+
         return chain.filter(exchange);
     }
 }

@@ -9,18 +9,18 @@ const AddExpense = () => {
   const { groupId: initialGroupId, expenseId } = useParams();
   const navigate = useNavigate();
   const isEditMode = !!expenseId;
-  
+
   const [allGroups, setAllGroups] = useState([]);
   const [selectedGroupId, setSelectedGroupId] = useState(initialGroupId || '');
   const [members, setMembers] = useState([]);
-  
+
   const [description, setDescription] = useState('');
   const [amount, setAmount] = useState('');
   const [paidBy, setPaidBy] = useState('');
-  const [splitType, setSplitType] = useState(''); 
-  const [splits, setSplits] = useState([]); 
-  const [calculatedSplits, setCalculatedSplits] = useState([]); 
-  
+  const [splitType, setSplitType] = useState('');
+  const [splits, setSplits] = useState([]);
+  const [calculatedSplits, setCalculatedSplits] = useState([]);
+
   const getLocalDatetime = (dateObj = new Date()) => {
     const now = dateObj;
     const offset = now.getTimezoneOffset() * 60000;
@@ -30,7 +30,7 @@ const AddExpense = () => {
 
   const [expenseDate, setExpenseDate] = useState(getLocalDatetime());
   const [note, setNote] = useState('');
-  
+
   const [isLoading, setIsLoading] = useState(false);
   const [isCalculating, setIsCalculating] = useState(false);
   const [errorMsg, setErrorMsg] = useState('');
@@ -54,7 +54,7 @@ const AddExpense = () => {
       setSplitType(expense.splitType);
       setNote(expense.note || '');
       setExpenseDate(getLocalDatetime(new Date(expense.expenseDate)));
-      
+
       // Wait for members to be loaded before setting splits
       const splitData = expense.splits.map(s => ({
         userId: s.userId,
@@ -77,7 +77,7 @@ const AddExpense = () => {
     setIsCalculating(true);
     try {
       const selectedSplits = currentSplits.filter(s => currentSplitType === 'EQUAL' ? s.selected : true);
-      
+
       const requestData = {
         amount: parseFloat(currentAmount),
         splitType: currentSplitType,
@@ -120,7 +120,7 @@ const AddExpense = () => {
       const groupData = await getGroupDetails(gid);
       const memberIds = groupData.members.map(m => m.userId);
       const users = await getUsersByIds(memberIds);
-      
+
       // Map official names to nicknames from the group
       const membersWithNicknames = users.map(u => {
         const memberInfo = groupData.members.find(m => m.userId === u.id);
@@ -129,13 +129,13 @@ const AddExpense = () => {
           name: memberInfo?.nickname || u.name
         };
       });
-      
+
       setMembers(membersWithNicknames);
-      
+
       if (!isEditMode) {
         const currentUser = JSON.parse(localStorage.getItem('user'));
         setPaidBy(currentUser.userId);
-        
+
         const initialSplits = users.map(u => ({
           userId: u.id,
           amount: '',
@@ -143,8 +143,8 @@ const AddExpense = () => {
         }));
         setSplits(initialSplits);
       } else {
-          // If in edit mode, fetch details after members are loaded to ensure we have user info
-          await loadExpenseDetails(expenseId);
+        // If in edit mode, fetch details after members are loaded to ensure we have user info
+        await loadExpenseDetails(expenseId);
       }
     } catch (error) {
       setErrorMsg("Failed to load group members.");
@@ -152,13 +152,13 @@ const AddExpense = () => {
   };
 
   const handleSplitValueChange = (userId, value) => {
-    setSplits(splits.map(s => 
+    setSplits(splits.map(s =>
       s.userId === userId ? { ...s, amount: value } : s
     ));
   };
 
   const toggleMemberSelection = (userId) => {
-    setSplits(splits.map(s => 
+    setSplits(splits.map(s =>
       s.userId === userId ? { ...s, selected: !s.selected } : s
     ));
   };
@@ -186,7 +186,7 @@ const AddExpense = () => {
       setErrorMsg("Please select a split type.");
       return;
     }
-    
+
     if (!validateTotals()) return;
 
     setIsLoading(true);
@@ -194,7 +194,7 @@ const AddExpense = () => {
 
     try {
       const selectedSplits = splits.filter(s => splitType === 'EQUAL' ? s.selected : true);
-      
+
       const requestData = {
         description,
         amount: parseFloat(amount),
@@ -216,7 +216,11 @@ const AddExpense = () => {
       }
       navigate('/dashboard');
     } catch (error) {
-      setErrorMsg(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} expense.`);
+      if (error.response?.status === 429) {
+        setErrorMsg("Add expenses limit exists.");
+      } else {
+        setErrorMsg(error.response?.data?.message || `Failed to ${isEditMode ? 'update' : 'add'} expense.`);
+      }
     } finally {
       setIsLoading(false);
     }
@@ -232,13 +236,13 @@ const AddExpense = () => {
         <form onSubmit={handleSubmit}>
           <div className="form-group">
             <label>Description</label>
-            <input 
-              type="text" 
+            <input
+              type="text"
               className="input-field"
-              placeholder="Enter a description" 
+              placeholder="Enter a description"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              required 
+              required
             />
           </div>
 
@@ -248,23 +252,23 @@ const AddExpense = () => {
               <select className="currency-select">
                 <option>₹ INR</option>
               </select>
-              <input 
-                type="number" 
-                step="0.01" 
+              <input
+                type="number"
+                step="0.01"
                 className="input-field amount-input-field"
                 placeholder="0"
                 value={amount}
                 onChange={(e) => setAmount(e.target.value)}
-                required 
+                required
               />
             </div>
           </div>
-          
+
           <div className="form-group">
             <label>Select Groups</label>
-            <select 
+            <select
               className="group-dropdown"
-              value={selectedGroupId} 
+              value={selectedGroupId}
               onChange={(e) => setSelectedGroupId(e.target.value)}
               required
               disabled={isEditMode}
@@ -297,8 +301,8 @@ const AddExpense = () => {
 
           <div className="form-group">
             <label>Date & Time</label>
-            <input 
-              type="datetime-local" 
+            <input
+              type="datetime-local"
               className="date-input"
               value={expenseDate}
               onChange={(e) => setExpenseDate(e.target.value)}
@@ -308,7 +312,7 @@ const AddExpense = () => {
 
           <div className="form-group">
             <label>Note (optional)</label>
-            <textarea 
+            <textarea
               className="note-input"
               placeholder="Add a note"
               value={note}
@@ -319,51 +323,51 @@ const AddExpense = () => {
           {/* Dynamic Split Breakdown */}
           {splitType && (
             <div className="split-members-list">
-              <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px'}}>
-                <label style={{fontSize: '12px', color: '#999', textTransform: 'uppercase'}}>Split Breakdown</label>
-                {isCalculating && <span style={{fontSize: '11px', color: '#00b04f'}}>Calculating...</span>}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                <label style={{ fontSize: '12px', color: '#999', textTransform: 'uppercase' }}>Split Breakdown</label>
+                {isCalculating && <span style={{ fontSize: '11px', color: '#00b04f' }}>Calculating...</span>}
               </div>
               {splits.map((split) => {
                 const member = members.find(m => m.id === split.userId);
                 const backendCalc = calculatedSplits.find(cs => cs.userId === split.userId);
-                
+
                 return (
                   <div key={split.userId} className="member-row">
                     <div className="user-info">
                       {splitType === 'EQUAL' && (
-                        <input 
-                          type="checkbox" 
-                          checked={split.selected} 
+                        <input
+                          type="checkbox"
+                          checked={split.selected}
                           onChange={() => toggleMemberSelection(split.userId)}
                         />
                       )}
                       <img src={`https://ui-avatars.com/api/?name=${member?.name}&background=eee&color=666&rounded=true`} width="30" alt="avatar" />
                       <span>{member?.id === JSON.parse(localStorage.getItem('user')).userId ? 'You' : member?.name}</span>
                     </div>
-                    
+
                     <div className="split-input-group">
                       {splitType === 'EQUAL' ? (
                         split.selected ? (
                           <span className="split-amount-display">₹{backendCalc ? backendCalc.amount.toFixed(2) : '0.00'}</span>
                         ) : (
-                          <span style={{color: '#ccc', fontSize: '14px'}}>Excluded</span>
+                          <span style={{ color: '#ccc', fontSize: '14px' }}>Excluded</span>
                         )
                       ) : (
-                        <div style={{display: 'flex', flexDirection: 'column', alignItems: 'flex-end'}}>
-                           <div style={{display: 'flex', alignItems: 'center', gap: '5px'}}>
-                              <input 
-                                type="number" 
-                                step="0.01"
-                                className="split-input-sm"
-                                placeholder={splitType === 'PERCENTAGE' ? '%' : '0.00'}
-                                value={split.amount}
-                                onChange={(e) => handleSplitValueChange(split.userId, e.target.value)}
-                              />
-                              <span style={{fontSize: '14px', color: '#999'}}>{splitType === 'PERCENTAGE' ? '%' : '₹'}</span>
-                           </div>
-                           {splitType === 'PERCENTAGE' && backendCalc && (
-                             <span style={{fontSize: '12px', color: '#00b04f'}}>₹{backendCalc.amount.toFixed(2)}</span>
-                           )}
+                        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                            <input
+                              type="number"
+                              step="0.01"
+                              className="split-input-sm"
+                              placeholder={splitType === 'PERCENTAGE' ? '%' : '0.00'}
+                              value={split.amount}
+                              onChange={(e) => handleSplitValueChange(split.userId, e.target.value)}
+                            />
+                            <span style={{ fontSize: '14px', color: '#999' }}>{splitType === 'PERCENTAGE' ? '%' : '₹'}</span>
+                          </div>
+                          {splitType === 'PERCENTAGE' && backendCalc && (
+                            <span style={{ fontSize: '12px', color: '#00b04f' }}>₹{backendCalc.amount.toFixed(2)}</span>
+                          )}
                         </div>
                       )}
                     </div>
