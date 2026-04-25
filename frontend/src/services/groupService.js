@@ -1,35 +1,31 @@
-import axios from 'axios';
-
-// Note: API Gateway runs on port 8080
-const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
-const GROUP_API_URL = `${GATEWAY_URL}/api/groups`;
+import api from './api';
 
 export const createGroup = async (name, members = []) => {
-    const response = await axios.post(GROUP_API_URL, { name, members });
+    const response = await api.post('/api/groups', { name, members });
     return response.data;
 };
 
 export const getUserGroups = async () => {
-    const response = await axios.get(GROUP_API_URL);
+    const response = await api.get('/api/groups');
     return response.data;
 };
 
 export const getGroupDetails = async (groupId) => {
-    const response = await axios.get(`${GROUP_API_URL}/${groupId}`);
+    const response = await api.get(`/api/groups/${groupId}`);
     return response.data;
 };
 
 export const deleteGroup = async (groupId) => {
-    const response = await axios.delete(`${GROUP_API_URL}/${groupId}`);
+    const response = await api.delete(`/api/groups/${groupId}`);
     return response.data;
 };
 
 export const updateGroup = async (groupId, name, members = []) => {
-    const response = await axios.put(`${GROUP_API_URL}/${groupId}`, { name, members });
+    const response = await api.put(`/api/groups/${groupId}`, { name, members });
     return response.data;
 };
 
 export const addGroupMember = async (groupId, userId) => {
-    const response = await axios.post(`${GROUP_API_URL}/${groupId}/members`, { userId });
+    const response = await api.post(`/api/groups/${groupId}/members`, { userId });
     return response.data;
 };

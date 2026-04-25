@@ -1,40 +1,36 @@
-import axios from 'axios';
-
-// Note: API Gateway runs on port 8080
-const GATEWAY_URL = import.meta.env.VITE_API_GATEWAY_URL || 'http://localhost:8080';
-const EXPENSE_API_URL = `${GATEWAY_URL}/api/expenses`;
+import api from './api';
 
 export const createExpense = async (expenseData) => {
-    const response = await axios.post(EXPENSE_API_URL, expenseData);
+    const response = await api.post('/api/expenses', expenseData);
     return response.data;
 };
 
-export const calculateSplits = async (expenseData) => {
-    const response = await axios.post(`${EXPENSE_API_URL}/calculate`, expenseData);
+export const getUserExpenses = async () => {
+    const response = await api.get('/api/expenses');
     return response.data;
 };
 
 export const getGroupExpenses = async (groupId) => {
-    const response = await axios.get(`${EXPENSE_API_URL}/group/${groupId}`);
+    const response = await api.get(`/api/expenses/group/${groupId}`);
     return response.data;
 };
 
-export const getGroupBalances = async (groupId) => {
-    const response = await axios.get(`${EXPENSE_API_URL}/group/${groupId}/balances`);
+export const deleteExpense = async (id) => {
+    const response = await api.delete(`/api/expenses/${id}`);
     return response.data;
 };
 
-export const getExpenseDetails = async (expenseId) => {
-    const response = await axios.get(`${EXPENSE_API_URL}/${expenseId}`);
+export const getExpenseDetails = async (id) => {
+    const response = await api.get(`/api/expenses/${id}`);
     return response.data;
 };
 
-export const updateExpense = async (expenseId, expenseData) => {
-    const response = await axios.put(`${EXPENSE_API_URL}/${expenseId}`, expenseData);
+export const updateExpense = async (id, expenseData) => {
+    const response = await api.put(`/api/expenses/${id}`, expenseData);
     return response.data;
 };
 
-export const deleteExpense = async (expenseId) => {
-    const response = await axios.delete(`${EXPENSE_API_URL}/${expenseId}`);
+export const calculateSplits = async (requestData) => {
+    const response = await api.post('/api/expenses/calculate', requestData);
     return response.data;
 };
