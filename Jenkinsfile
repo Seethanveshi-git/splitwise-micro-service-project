@@ -82,19 +82,19 @@ pipeline {
                                         export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
                                         export AWS_DEFAULT_REGION=${AWS_REGION}
 
-                                        echo "🔐 Logging into ECR..."
+                                        echo "Logging into ECR..."
                                         aws ecr get-login-password --region ${AWS_REGION} \
                                         | docker login --username AWS --password-stdin ${ECR_URL}
 
-                                        echo "📦 Building ${service}..."
+                                        echo "Building ${service}..."
                                         mvn clean package -DskipTests
 
                                         docker build -t ${service}:${BUILD_NUMBER} .
 
-                                        echo "🏷️ Tagging image..."
+                                        echo "Tagging image..."
                                         docker tag ${service}:${BUILD_NUMBER} ${ECR_URL}/${service}:${BUILD_NUMBER}
 
-                                        echo "🚀 Pushing to ECR..."
+                                        echo "Pushing to ECR..."
                                         docker push ${ECR_URL}/${service}:${BUILD_NUMBER}
                                         """
                                     }
