@@ -2,7 +2,7 @@ pipeline {
     agent any
 
     environment {
-        DOCKER_USER = "seethanveshi"
+        DOCKER_IMAGE = "seethanveshi/auth-service"
     }
 
     stages {
@@ -13,101 +13,48 @@ pipeline {
             }
         }
 
-        stage('Build Services') {
+        stage('Build JAR') {
             steps {
-                script {
-                    def services = [
-                        "service-registry",
-                        "auth-service",
-                        "group-service",
-                        "expense-service",
-                        "dashboard-service",
-                        "api-gateway"
-                    ]
-
-                    for (service in services) {
-                        echo "Building ${service}..."
-                        dir(service) {
-                            sh "mvn clean package -DskipTests"
-                        }
-                    }
+                dir('auth-service') {
+                    sh 'mvn clean package -DskipTests'
                 }
             }
         }
 
-        stage('Build Docker Images') {
+        stage('Build Docker Image') {
             steps {
-                script {
-                    def services = [
-                        "service-registry",
-                        "auth-service",
-                        "group-service",
-                        "expense-service",
-                        "dashboard-service",
-                        "api-gateway"
-                    ]
-
-                    for (service in services) {
-                        echo "Building Docker image for ${service}..."
-                        dir(service) {
-                            sh "docker build -t ${service}:${BUILD_NUMBER} ."
-                        }
-                    }
+                dir('auth-service') {
+                    sh 'docker build -t auth-service:${BUILD_NUMBER} .'
                 }
             }
         }
 
-        stage('Tag Images') {
+        stage('Tag Image') {
             steps {
-                script {
-                    def services = [
-                        "service-registry",
-                        "auth-service",
-                        "group-service",
-                        "expense-service",
-                        "dashboard-service",
-                        "api-gateway"
-                    ]
-
-                    for (service in services) {
-                        sh """
-                        docker tag ${service}:${BUILD_NUMBER} ${DOCKER_USER}/${service}:${BUILD_NUMBER}
-                        docker tag ${service}:${BUILD_NUMBER} ${DOCKER_USER}/${service}:latest
-                        """
-                    }
-                }
+                sh '''
+                docker tag auth-service:${BUILD_NUMBER} ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                docker tag auth-service:${BUILD_NUMBER} ${DOCKER_IMAGE}:latest
+                '''
             }
         }
 
-        stage('Push Images') {
+        stage('Push to Docker Hub') {
             steps {
                 withCredentials([usernamePassword(
                     credentialsId: 'dockerhub-creds',
-                    usernameVariable: 'DOCKER_USER_VAR',
+                    usernameVariable: 'DOCKER_USER',
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
-
                     sh '''
-                    echo $DOCKER_PASS | docker login -u $DOCKER_USER_VAR --password-stdin
+                    echo "Logging into Docker Hub..."
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+
+                    echo "Pushing versioned image..."
+                    docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+
+                    echo "Pushing latest image..."
+                    docker push ${DOCKER_IMAGE}:latest
                     '''
-
-                    script {
-                        def services = [
-                            "service-registry",
-                            "auth-service",
-                            "group-service",
-                            "expense-service",
-                            "dashboard-service",
-                            "api-gateway"
-                        ]
-
-                        for (service in services) {
-                            sh """
-                            docker push ${DOCKER_USER}/${service}:${BUILD_NUMBER}
-                            docker push ${DOCKER_USER}/${service}:latest
-                            """
-                        }
-                    }
                 }
             }
         }
