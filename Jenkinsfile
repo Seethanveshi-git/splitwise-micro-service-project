@@ -7,12 +7,6 @@ pipeline {
 
     stages {
 
-        stage('Clone') {
-            steps {
-                git 'https://github.com/Seethanveshi-git/splitwise-micro-service-project.git'
-            }
-        }
-
         stage('Build JAR') {
             steps {
                 dir('auth-service') {
@@ -46,13 +40,8 @@ pipeline {
                     passwordVariable: 'DOCKER_PASS'
                 )]) {
                     sh '''
-                    echo "Logging into Docker Hub..."
                     echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
-
-                    echo "Pushing versioned image..."
                     docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
-
-                    echo "Pushing latest image..."
                     docker push ${DOCKER_IMAGE}:latest
                     '''
                 }
