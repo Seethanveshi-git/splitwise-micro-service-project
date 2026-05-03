@@ -1,0 +1,92 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres-db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init-db.sql:/docker-entrypoint-initdb.d/init-db.sql
+
+  redis:
+    image: redis:7-alpine
+    container_name: redis
+    ports:
+      - "6380:6379"
+
+  service-registry:
+    build: ./service-registry
+    container_name: service-registry
+    ports:
+      - "8761:8761"
+
+  auth-service:
+    build: ./auth-service
+    container_name: auth-service
+    depends_on:
+      - postgres
+      - service-registry
+    ports:
+      - "8081:8081"
+    environment:
+      AUTH_DB_URL: jdbc:postgresql://postgres:5432/micro_service_auth_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      EUREKA_SERVER: http://service-registry:8761/eureka
+
+  group-service:
+    build: ./group-service
+    container_name: group-service
+    depends_on:
+      - service-registry
+      - postgres
+    ports:
+      - "8084:8084"
+    environment:
+      GROUP_DB_URL: jdbc:postgresql://postgres:5432/micro_service_group_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      EUREKA_SERVER: http://service-registry:8761/eureka
+
+  expense-service:
+    build: ./expense-service
+    container_name: expense-service
+    depends_on:
+      - service-registry
+      - postgres
+    ports:
+      - "8083:8083"
+    environment:
+      EXPENSE_DB_URL: jdbc:postgresql://postgres:5432/micro_service_expense_db
+      DB_USERNAME: postgres
+      DB_PASSWORD: password
+      EUREKA_SERVER: http://service-registry:8761/eureka
+
+  dashboard-service:
+    build: ./dashboard-service
+    container_name: dashboard-service
+    depends_on:
+      - service-registry
+    ports:
+      - "8082:8082"
+    environment:
+      EUREKA_SERVER: http://service-registry:8761/eureka
+
+  api-gateway:
+    build: ./api-gateway
+    container_name: api-gateway
+    depends_on:
+      - service-registry
+      - redis
+    ports:
+      - "8080:8080"
+    environment:
+      EUREKA_SERVER: http://service-registry:8761/eureka
+      REDIS_HOST: redis
+
+volumes:
+  postgres_data:

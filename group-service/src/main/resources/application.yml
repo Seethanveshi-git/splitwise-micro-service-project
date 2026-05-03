@@ -1,11 +1,11 @@
 server:
-  port: 0
+  port: 8084
 
 spring:
   application:
     name: group-service
   datasource:
-    url: ${GROUP_DB_URL:jdbc:postgresql://localhost:5432/micro-service_group_db}
+    url: ${GROUP_DB_URL:jdbc:postgresql://postgres:5433/micro_service_group_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
   jpa:

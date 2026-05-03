@@ -1,0 +1,3 @@
+CREATE DATABASE micro_service_auth_db;
+CREATE DATABASE micro_service_group_db;
+CREATE DATABASE micro_service_expense_db;

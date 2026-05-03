@@ -1,0 +1,8 @@
+com/splitwise/dashboard/dto/GroupDashboardResponse$GroupDashboardResponseBuilder.class
+com/splitwise/dashboard/DashboardServiceApplication.class
+com/splitwise/dashboard/client/ExpenseServiceClient.class
+com/splitwise/dashboard/client/AuthServiceClient.class
+com/splitwise/dashboard/client/GroupServiceClient.class
+com/splitwise/dashboard/service/DashboardService.class
+com/splitwise/dashboard/controller/DashboardController.class
+com/splitwise/dashboard/dto/GroupDashboardResponse.class

@@ -1,0 +1,7 @@
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/client/AuthServiceClient.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/service/DashboardService.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/dto/GroupDashboardResponse.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/client/GroupServiceClient.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/controller/DashboardController.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/DashboardServiceApplication.java
+/home/seethanveshi/SpringBoot/Splitwise-microservices/dashboard-service/src/main/java/com/splitwise/dashboard/client/ExpenseServiceClient.java

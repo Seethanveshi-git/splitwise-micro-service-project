@@ -1,11 +1,11 @@
 server:
-  port: 0
+  port: 8081
 
 spring:
   application:
     name: auth-service
   datasource:
-    url: ${AUTH_DB_URL:jdbc:postgresql://localhost:5432/micro-service_auth_db}
+    url: ${AUTH_DB_URL:jdbc:postgresql://postgres:5433/micro_service_auth_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
   jpa:
