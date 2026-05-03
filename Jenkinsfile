@@ -116,7 +116,8 @@ pipeline {
                         }
                     }
 
-                    parallel parallelStages, failFast: true
+                    parallelStages.failFast = true
+                    parallel parallelStages
                 }
             }
         }
