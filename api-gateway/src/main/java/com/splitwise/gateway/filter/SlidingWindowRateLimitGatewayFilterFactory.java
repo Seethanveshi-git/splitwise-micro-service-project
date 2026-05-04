@@ -49,11 +49,7 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
     public GatewayFilter apply(Config config) {
             return (exchange, chain) -> {
                 // Only rate limit POST requests (Add Expense)
-            String path = exchange.getRequest().getURI().getPath();
-
-            // Only rate limit the "Add Expense" endpoint (POST /api/expenses)
-            // Skip for sub-paths like /api/expenses/calculate or /api/expenses/123/edit
-            if (!"POST".equalsIgnoreCase(exchange.getRequest().getMethod().name()) || !"/api/expenses".equals(path)) {
+            if (!"POST".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
                 return chain.filter(exchange);
             }
 
