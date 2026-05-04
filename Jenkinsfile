@@ -1,7 +1,6 @@
 pipeline {
 agent any
 
-
 environment {
     AWS_REGION = "ap-south-1"
     ECR_REGISTRY = "824033491491.dkr.ecr.ap-south-1.amazonaws.com"
@@ -54,13 +53,7 @@ stages {
 
     stage('ECR Login') {
         steps {
-            withCredentials([
-                usernamePassword(
-                    credentialsId: 'aws-creds',
-                    usernameVariable: 'AWS_ACCESS_KEY_ID',
-                    passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                )
-            ]) {
+            withCredentials([aws(credentialsId: 'aws-creds', accessKeyVariable: 'AWS_ACCESS_KEY_ID', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY')]) {
                 sh """
                 aws ecr get-login-password --region $AWS_REGION | \
                 docker login --username AWS --password-stdin $ECR_REGISTRY
@@ -89,9 +82,6 @@ stages {
                             docker build -t ${ECR_REGISTRY}/${service}:${BUILD_NUMBER} .
                             docker push ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}
                             """
-
-                            // Cleanup to avoid disk issues
-                            sh "docker system prune -af || true"
                         }
                     }
                 }
@@ -142,4 +132,9 @@ stages {
     }
 }
 
+post {
+    always {
+        sh "docker system prune -f"
+    }
+}
 }
