@@ -29,7 +29,7 @@ spring:
           filters:
             - name: SlidingWindowRateLimit
               args:
-                limit: 5
+                limit: 2
                 windowSeconds: 60
 
         - id: dashboard-service
