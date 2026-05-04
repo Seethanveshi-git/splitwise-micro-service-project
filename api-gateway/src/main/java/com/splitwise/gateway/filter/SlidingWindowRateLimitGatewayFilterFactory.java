@@ -107,12 +107,14 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
                         .onErrorResume(e -> {
                             System.err.println("DEBUG: Redis Error - " + e.getMessage());
                             e.printStackTrace();
-                            return chain.filter(exchange);
+                            exchange.getResponse().setStatusCode(HttpStatus.INTERNAL_SERVER_ERROR);
+                            return exchange.getResponse().setComplete();
                         });
 
             } catch (Exception e) {
                 System.err.println("DEBUG: JWT/Filter Error - " + e.getMessage());
-                return chain.filter(exchange);
+                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
+                return exchange.getResponse().setComplete();
             }
         };
     }
