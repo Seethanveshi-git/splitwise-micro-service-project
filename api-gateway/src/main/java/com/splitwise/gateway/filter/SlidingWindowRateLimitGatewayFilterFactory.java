@@ -69,14 +69,14 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
             }
 
             try {
+                System.out.println("DEBUG: Rate Limiter triggered for " + exchange.getRequest().getURI());
+                
                 if (secret == null || secret.isEmpty()) {
-                    System.err.println("Rate Limit Error: jwt.secret is NOT configured in Gateway!");
-                    return chain.filter(exchange); // Skip rate limit if misconfigured instead of crashing
+                    System.err.println("DEBUG: Rate Limit Error - jwt.secret is NULL");
+                    return chain.filter(exchange);
                 }
 
-                // Decode secret using Base64 (matches Auth Service)
                 byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
-                
                 Claims claims = Jwts.parserBuilder()
                         .setSigningKey(Keys.hmacShaKeyFor(keyBytes))
                         .build()
@@ -84,21 +84,20 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
                         .getBody();
 
                 Object userIdObj = claims.get("userId");
-                if (userIdObj == null) {
-                    System.err.println("Rate Limit Error: userId claim missing in token");
-                    return chain.filter(exchange);
-                }
-                
-                String userId = userIdObj.toString();
+                String userId = userIdObj != null ? userIdObj.toString() : "unknown";
                 String redisKey = "rate_limit:expenses:" + userId;
                 long now = Instant.now().toEpochMilli();
                 double windowStart = (double) now - (config.getWindowSeconds() * 1000L);
+
+                System.out.println("DEBUG: UserID=" + userId + ", Key=" + redisKey + ", Limit=" + config.getLimit());
 
                 return redisTemplate.opsForZSet()
                         .removeRangeByScore(redisKey, Range.closed(0.0, windowStart))
                         .then(redisTemplate.opsForZSet().count(redisKey, Range.closed(windowStart, (double) now + 1000L)))
                         .flatMap(count -> {
+                            System.out.println("DEBUG: Current Count for " + userId + " is " + count);
                             if (count >= config.getLimit()) {
+                                System.out.println("DEBUG: RATE LIMIT EXCEEDED for " + userId);
                                 exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
                                 return exchange.getResponse().setComplete();
                             }
@@ -106,13 +105,14 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
                                     .then(chain.filter(exchange));
                         })
                         .onErrorResume(e -> {
-                            System.err.println("Redis Rate Limit Error: " + e.getMessage());
-                            return chain.filter(exchange); // Fallback to allow request if Redis is down
+                            System.err.println("DEBUG: Redis Error - " + e.getMessage());
+                            e.printStackTrace();
+                            return chain.filter(exchange);
                         });
 
             } catch (Exception e) {
-                System.err.println("Rate Limit JWT Parsing Error: " + e.getMessage());
-                return chain.filter(exchange); // Fallback to allow request if token parsing fails
+                System.err.println("DEBUG: JWT/Filter Error - " + e.getMessage());
+                return chain.filter(exchange);
             }
         };
     }
