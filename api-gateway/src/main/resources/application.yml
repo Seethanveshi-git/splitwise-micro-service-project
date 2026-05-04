@@ -26,6 +26,11 @@ spring:
           uri: lb://EXPENSE-SERVICE
           predicates:
             - Path=/api/expenses/**
+          filters:
+            - name: SlidingWindowRateLimit
+              args:
+                limit: 5
+                windowSeconds: 60
 
         - id: dashboard-service
           uri: lb://DASHBOARD-SERVICE

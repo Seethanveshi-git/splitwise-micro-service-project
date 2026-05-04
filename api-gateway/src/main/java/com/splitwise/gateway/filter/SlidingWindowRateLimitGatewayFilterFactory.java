@@ -58,13 +58,21 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
             }
 
             HttpCookie jwtCookie = exchange.getRequest().getCookies().getFirst("jwt");
-            if (jwtCookie == null) {
+            String authHeader = exchange.getRequest().getHeaders().getFirst("Authorization");
+            String token = null;
+
+            if (jwtCookie != null) {
+                token = jwtCookie.getValue();
+            } else if (authHeader != null && authHeader.startsWith("Bearer ")) {
+                token = authHeader.substring(7);
+            }
+
+            if (token == null) {
                 exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
                 return exchange.getResponse().setComplete();
             }
 
             try {
-                String token = jwtCookie.getValue();
                 
                 // Decode secret using Base64 (matches Auth Service)
                 byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
