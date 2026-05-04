@@ -55,4 +55,4 @@ jwt:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER:eureka.client.service-url.defaultZone=${EUREKA_SERVER}}
+      defaultZone: ${EUREKA_SERVER:http://service-registry:8761/eureka/}

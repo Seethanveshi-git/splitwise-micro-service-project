@@ -5,7 +5,7 @@ spring:
   application:
     name: auth-service
   datasource:
-    url: ${AUTH_DB_URL:jdbc:postgresql://postgres:5433/micro_service_auth_db}
+    url: ${AUTH_DB_URL:jdbc:postgresql://postgres:5432/micro_service_auth_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
   jpa:
@@ -20,4 +20,4 @@ jwt:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER:eureka.client.service-url.defaultZone=${EUREKA_SERVER}}
+      defaultZone: ${EUREKA_SERVER:http://service-registry:8761/eureka/}

@@ -5,7 +5,7 @@ spring:
   application:
     name: expense-service
   datasource:
-    url: ${EXPENSE_DB_URL:jdbc:postgresql://postgres:5433/micro_service_expense_db}
+    url: ${EXPENSE_DB_URL:jdbc:postgresql://postgres:5432/micro_service_expense_db}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:password}
   jpa:
@@ -19,4 +19,4 @@ spring:
 eureka:
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER:eureka.client.service-url.defaultZone=${EUREKA_SERVER}}
+      defaultZone: ${EUREKA_SERVER:http://service-registry:8761/eureka/}

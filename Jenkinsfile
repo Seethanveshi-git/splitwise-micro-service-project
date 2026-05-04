@@ -1,112 +1,142 @@
 pipeline {
-    agent any
+agent any
 
-    environment {
-        AWS_REGION = "ap-south-1"
-        AWS_ACCOUNT_ID = "824033491491"
-        ECR_URL = "${AWS_ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
-    }
 
-    stages {
+environment {
+    AWS_REGION = "ap-south-1"
+    ECR_REGISTRY = "824033491491.dkr.ecr.ap-south-1.amazonaws.com"
+}
 
-        stage('Detect Changes') {
-            steps {
-                script {
-                    def changes = sh(
-                        script: """
-                        git diff --name-only ${env.GIT_PREVIOUS_SUCCESSFUL_COMMIT ?: 'HEAD~1'} HEAD || echo FIRST_BUILD
-                        """,
-                        returnStdout: true
-                    ).trim()
+stages {
 
-                    def services = [
-                        "service-registry",
-                        "auth-service",
-                        "group-service",
-                        "expense-service",
-                        "dashboard-service",
-                        "api-gateway"
-                    ]
+    stage('Detect Changes') {
+        steps {
+            script {
+                def changes = sh(
+                    script: """
+                    git diff --name-only HEAD~1 HEAD || echo "ALL"
+                    """,
+                    returnStdout: true
+                ).trim()
 
-                    def changed = []
+                def services = [
+                    "auth-service",
+                    "group-service",
+                    "expense-service",
+                    "dashboard-service",
+                    "api-gateway",
+                    "service-registry"
+                ]
 
-                    if (changes.contains("FIRST_BUILD") || !env.GIT_PREVIOUS_SUCCESSFUL_COMMIT) {
-                        changed = services
-                    } else {
-                        if (changes.contains("pom.xml") || changes.contains("docker-compose.yml")) {
-                            changed = services
-                        } else {
-                            services.each { s ->
-                                if (changes.contains(s)) {
-                                    changed.add(s)
-                                }
-                            }
+                def changed = []
+
+                if (changes == "ALL") {
+                    changed = services
+                } else {
+                    services.each { s ->
+                        if (changes.contains(s)) {
+                            changed.add(s)
                         }
                     }
-
-                    if (changed.isEmpty()) {
-                        error("No services to build")
-                    }
-
-                    env.SERVICES = changed.join(',')
-                    echo "Services: ${env.SERVICES}"
                 }
+
+                if (changed.isEmpty()) {
+                    echo "No changes detected"
+                    currentBuild.result = 'SUCCESS'
+                    return
+                }
+
+                env.SERVICES = changed.join(',')
+                echo "Changed services: ${env.SERVICES}"
             }
         }
+    }
 
-        stage('Build & Push Services') {
-            steps {
-                script {
+    stage('ECR Login') {
+        steps {
+            withCredentials([[
+                $class: 'AmazonWebServicesCredentialsBinding',
+                credentialsId: 'aws-creds'
+            ]]) {
+                sh """
+                aws ecr get-login-password --region $AWS_REGION | \
+                docker login --username AWS --password-stdin $ECR_REGISTRY
+                """
+            }
+        }
+    }
 
-                    def services = env.SERVICES.split(',')
-                    def parallelStages = [:]
+    stage('Build & Push') {
+        steps {
+            script {
+                def services = env.SERVICES.split(',')
+                def parallelStages = [:]
+
+                services.each { svc ->
+                    def service = svc.trim()
+
+                    parallelStages[service] = {
+                        dir(service) {
+
+                            echo "Building ${service}"
+
+                            sh "mvn clean package -DskipTests"
+
+                            sh """
+                            docker build -t ${ECR_REGISTRY}/${service}:${BUILD_NUMBER} .
+                            docker push ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}
+                            """
+
+                            // Cleanup to avoid disk issues
+                            sh "docker system prune -af || true"
+                        }
+                    }
+                }
+
+                parallel parallelStages
+            }
+        }
+    }
+
+    stage('Update GitOps Repo') {
+        steps {
+            script {
+                def services = env.SERVICES.split(',')
+
+                withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')]) {
+
+                    sh """
+                    rm -rf manifests
+                    git clone https://x-access-token:${GIT_TOKEN}@github.com/Seethanveshi-git/splitwise-k8s-manifests.git manifests
+                    """
 
                     services.each { svc ->
                         def service = svc.trim()
 
-                        parallelStages[service] = {
+                        if (fileExists("manifests/${service}/deployment.yaml")) {
 
-                            stage(service) {
-                                dir(service) {
-
-                                    withCredentials([usernamePassword(
-                                        credentialsId: 'aws-creds',
-                                        usernameVariable: 'AWS_ACCESS_KEY_ID',
-                                        passwordVariable: 'AWS_SECRET_ACCESS_KEY'
-                                    )]) {
-
-                                        sh """
-                                        set -e
-
-                                        export AWS_ACCESS_KEY_ID=$AWS_ACCESS_KEY_ID
-                                        export AWS_SECRET_ACCESS_KEY=$AWS_SECRET_ACCESS_KEY
-                                        export AWS_DEFAULT_REGION=${AWS_REGION}
-
-                                        echo "Logging into ECR..."
-                                        aws ecr get-login-password --region ${AWS_REGION} \
-                                        | docker login --username AWS --password-stdin ${ECR_URL}
-
-                                        echo "Building ${service}..."
-                                        mvn clean package -DskipTests
-
-                                        docker build -t ${service}:${BUILD_NUMBER} .
-
-                                        echo "Tagging image..."
-                                        docker tag ${service}:${BUILD_NUMBER} ${ECR_URL}/${service}:${BUILD_NUMBER}
-
-                                        echo "Pushing to ECR..."
-                                        docker push ${ECR_URL}/${service}:${BUILD_NUMBER}
-                                        """
-                                    }
-                                }
-                            }
+                            sh """
+                            sed -i "s|image: .*${service}.*|image: ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}|g" \
+                            manifests/${service}/deployment.yaml
+                            """
+                        } else {
+                            echo "Skipping ${service}, deployment.yaml not found"
                         }
                     }
 
-                    parallelStages.failFast = true
-                    parallel parallelStages
+                    sh """
+                    cd manifests
+                    git config user.email "jenkins@local"
+                    git config user.name "jenkins"
+
+                    git add .
+                    git commit -m "Update services to build ${BUILD_NUMBER}" || echo "No changes"
+                    git push
+                    """
                 }
             }
         }
     }
+}
+
 }
