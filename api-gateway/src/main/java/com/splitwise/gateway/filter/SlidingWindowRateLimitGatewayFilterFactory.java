@@ -48,8 +48,12 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
     @Override
     public GatewayFilter apply(Config config) {
             return (exchange, chain) -> {
-                // Only rate limit POST requests (Add Expense)
-            if (!"POST".equalsIgnoreCase(exchange.getRequest().getMethod().name())) {
+                // Only rate limit POST requests to the main endpoint (Add Expense)
+            String path = exchange.getRequest().getURI().getPath();
+            boolean isAddExpense = "POST".equalsIgnoreCase(exchange.getRequest().getMethod().name()) && 
+                                  (path.equals("/api/expenses") || path.equals("/api/expenses/"));
+
+            if (!isAddExpense) {
                 return chain.filter(exchange);
             }
 
@@ -69,10 +73,7 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
             }
 
             try {
-                System.out.println("DEBUG: Rate Limiter triggered for " + exchange.getRequest().getURI());
-                
                 if (secret == null || secret.isEmpty()) {
-                    System.err.println("DEBUG: Rate Limit Error - jwt.secret is NULL");
                     return chain.filter(exchange);
                 }
 
@@ -89,15 +90,11 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
                 long now = Instant.now().toEpochMilli();
                 double windowStart = (double) now - (config.getWindowSeconds() * 1000L);
 
-                System.out.println("DEBUG: UserID=" + userId + ", Key=" + redisKey + ", Limit=" + config.getLimit());
-
                 return redisTemplate.opsForZSet()
                         .removeRangeByScore(redisKey, Range.closed(0.0, windowStart))
                         .then(redisTemplate.opsForZSet().count(redisKey, Range.closed(windowStart, (double) now + 1000L)))
                         .flatMap(count -> {
-                            System.out.println("DEBUG: Current Count for " + userId + " is " + count);
                             if (count >= config.getLimit()) {
-                                System.out.println("DEBUG: RATE LIMIT EXCEEDED for " + userId);
                                 exchange.getResponse().setStatusCode(HttpStatus.TOO_MANY_REQUESTS);
                                 return exchange.getResponse().setComplete();
                             }
