@@ -3,7 +3,7 @@ import api from './api';
 export const login = async (email, password) => {
     const response = await api.post('/api/auth/login', { email, password });
     
-    // Only store non-sensitive info for the UI
+    // Store only non-sensitive profile info
     if (response.data) {
         const userData = {
             userId: response.data.userId,
