@@ -73,7 +73,11 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
             }
 
             try {
-                
+                if (secret == null || secret.isEmpty()) {
+                    System.err.println("Rate Limit Error: jwt.secret is NOT configured in Gateway!");
+                    return chain.filter(exchange); // Skip rate limit if misconfigured instead of crashing
+                }
+
                 // Decode secret using Base64 (matches Auth Service)
                 byte[] keyBytes = io.jsonwebtoken.io.Decoders.BASE64.decode(secret);
                 
@@ -85,7 +89,8 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
 
                 Object userIdObj = claims.get("userId");
                 if (userIdObj == null) {
-                    throw new RuntimeException("userId claim missing");
+                    System.err.println("Rate Limit Error: userId claim missing in token");
+                    return chain.filter(exchange);
                 }
                 
                 String userId = userIdObj.toString();
@@ -103,12 +108,15 @@ public class SlidingWindowRateLimitGatewayFilterFactory extends AbstractGatewayF
                             }
                             return redisTemplate.opsForZSet().add(redisKey, String.valueOf(now), (double) now)
                                     .then(chain.filter(exchange));
+                        })
+                        .onErrorResume(e -> {
+                            System.err.println("Redis Rate Limit Error: " + e.getMessage());
+                            return chain.filter(exchange); // Fallback to allow request if Redis is down
                         });
 
             } catch (Exception e) {
-                System.err.println("Rate Limit Filter Error: " + e.getMessage());
-                exchange.getResponse().setStatusCode(HttpStatus.UNAUTHORIZED);
-                return exchange.getResponse().setComplete();
+                System.err.println("Rate Limit JWT Parsing Error: " + e.getMessage());
+                return chain.filter(exchange); // Fallback to allow request if token parsing fails
             }
         };
     }
