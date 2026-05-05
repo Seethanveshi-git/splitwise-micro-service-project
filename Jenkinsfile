@@ -14,7 +14,7 @@ pipeline {
                     def changes = sh(script: "git diff --name-only HEAD~1 HEAD || echo 'ALL'", returnStdout: true).trim()
                     echo "Files changed: ${changes}"
 
-                    def services = ["auth-service", "group-service", "expense-service", "dashboard-service", "api-gateway"]
+                    def services = ["auth-service", "group-service", "expense-service", "dashboard-service", "api-gateway", "service-registry"]
                     def changed = []
 
                     if (changes == "ALL" || changes.contains("pom.xml") || changes.contains("Jenkinsfile")) {
