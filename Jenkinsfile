@@ -81,23 +81,47 @@ pipeline {
             steps {
                 script {
                     def services = env.SERVICES.split(',')
+
                     withCredentials([string(credentialsId: 'github-token', variable: 'GIT_TOKEN')]) {
-                        sh "rm -rf manifests && git clone https://x-access-token:${GIT_TOKEN}@github.com/Seethanveshi-git/splitwise-k8s-manifests.git manifests"
-                        
+
+                        sh """
+                        echo "===== CLONING REPO ====="
+                        rm -rf manifests
+                        git clone https://x-access-token:${GIT_TOKEN}@github.com/Seethanveshi-git/splitwise-k8s-manifests.git manifests
+                        ls -la manifests
+                        """
+
                         services.each { svc ->
                             def service = svc.trim()
-                            if (fileExists("manifests/${service}/deployment.yaml")) {
-                                sh "sed -i 's|image: .*${service}.*|image: ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}|g' manifests/${service}/deployment.yaml"
-                            }
+
+                            sh """
+                            if [ -f manifests/${service}/deployment.yaml ]; then
+                                echo "Updating ${service}"
+                                sed -i "s|image: .*${service}.*|image: ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}|g" manifests/${service}/deployment.yaml
+                            else
+                                echo "Skipping ${service}, deployment.yaml not found"
+                            fi
+                            """
                         }
 
                         sh """
                         cd manifests
+
+                        echo "===== GIT STATUS ====="
+                        git status
+
                         git config user.email "jenkins@local"
                         git config user.name "jenkins"
+
                         git add .
-                        git commit -m "Update images to build ${BUILD_NUMBER}" || echo "No changes"
-                        git push
+
+                        echo "===== COMMIT ====="
+                        git commit -m "Update images to build ${BUILD_NUMBER}" || true
+
+                        echo "===== PUSH ====="
+                        git push https://x-access-token:${GIT_TOKEN}@github.com/Seethanveshi-git/splitwise-k8s-manifests.git
+
+                        echo "===== DONE ====="
                         """
                     }
                 }
