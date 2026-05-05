@@ -21,4 +21,4 @@ eureka:
     prefer-ip-address: true
   client:
     service-url:
-      defaultZone: ${EUREKA_SERVER:http://service-registry:8761/eureka/}
+      defaultZone: ${EUREKA_SERVER:http://service-registry.my-namespace.svc.cluster.local:8761/eureka/}
