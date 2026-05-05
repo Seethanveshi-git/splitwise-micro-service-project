@@ -7,7 +7,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://ab086f79fc8ae4c7d8da2d9dee2f41ac-558621593.ap-south-1.elb.amazonaws.com',
+        target: 'http://a2111ed9242a3472da01c23554fdc504-632350161.ap-south-1.elb.amazonaws.com',
         changeOrigin: true,
         secure: false,
       }

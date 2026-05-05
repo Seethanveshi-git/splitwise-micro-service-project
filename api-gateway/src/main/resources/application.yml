@@ -6,9 +6,9 @@ spring:
     name: api-gateway
   data:
     redis:
-      host: ${REDIS_HOST:redis}
-      port: ${SPRING_REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
+      host: ${REDIS_HOST:redis-11781.crce263.ap-south-1-1.ec2.cloud.redislabs.com}
+      port: ${SPRING_REDIS_PORT:11781}
+      password: ${REDIS_PASSWORD:c6iBDzGsQz922Ocvt496JvAYr8n4fxAn}
   cloud:
     gateway:
       routes:
