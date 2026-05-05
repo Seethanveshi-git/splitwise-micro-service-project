@@ -37,3 +37,4 @@ public class ExpenseRequest {
 
     private List<SplitRequest> splits;
 }
+
