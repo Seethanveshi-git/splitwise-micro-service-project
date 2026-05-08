@@ -14,7 +14,7 @@ pipeline {
                     def changes = sh(script: "git diff --name-only HEAD~1 HEAD || echo 'ALL'", returnStdout: true).trim()
                     echo "Files changed: ${changes}"
 
-                    def services = ["auth-service", "group-service", "expense-service", "dashboard-service", "api-gateway", "service-registry"]
+                    def services = ["auth-service", "group-service", "expense-service", "dashboard-service", "api-gateway", "service-registry", "frontend"]
                     def changed = []
 
                     if (changes == "ALL" || changes.contains("pom.xml") || changes.contains("Jenkinsfile")) {
@@ -66,7 +66,9 @@ pipeline {
                         parallelStages[service] = {
                             dir(service) {
                                 echo "Building ${service}..."
-                                sh "mvn clean package -DskipTests"
+                                if (service != 'frontend') {
+                                    sh "mvn clean package -DskipTests"
+                                }
                                 sh "docker build -t ${ECR_REGISTRY}/${service}:${BUILD_NUMBER} ."
                                 sh "docker push ${ECR_REGISTRY}/${service}:${BUILD_NUMBER}"
                             }
