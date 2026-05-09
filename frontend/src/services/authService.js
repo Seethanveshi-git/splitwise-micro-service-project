@@ -1,7 +1,7 @@
 import api from './api';
 
 export const login = async (email, password) => {
-    const response = await api.post('/api/auth/login', { email, password });
+    const response = await api.post('/auth/login', { email, password });
     
     // Store only non-sensitive profile info
     if (response.data) {
@@ -17,25 +17,25 @@ export const login = async (email, password) => {
 };
 
 export const signup = async (name, email, password) => {
-    const response = await api.post('/api/auth/signup', { name, email, password });
+    const response = await api.post('/auth/signup', { name, email, password });
     return response.data;
 };
 
 export const getOrCreateUser = async (email, name) => {
-    const response = await api.get('/api/auth/user', {
+    const response = await api.get('/auth/user', {
         params: { email, name }
     });
     return response.data;
 };
 
 export const getUsersByIds = async (ids) => {
-    const response = await api.get('/api/auth/users/list', {
+    const response = await api.get('/auth/users/list', {
         params: { ids: ids.join(',') }
     });
     return response.data;
 };
 
 export const logout = async () => {
-    await api.post('/api/auth/logout');
+    await api.post('/auth/logout');
     localStorage.removeItem('user');
 };
