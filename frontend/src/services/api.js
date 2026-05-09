@@ -3,7 +3,7 @@ import axios from 'axios';
 // When using a proxy in vite.config.js, we use a relative path
 // This ensures cookies are handled correctly as "same-origin" requests
 const api = axios.create({
-    baseURL: 'http://13.233.32.110:30081',
+    baseURL: '/api',
     withCredentials: true
 });
 
